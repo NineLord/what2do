@@ -19,6 +19,7 @@ impl Lines {
 	}
 
 	pub fn push_committed(&mut self, when: &BlameHunk<'_>, line: &str, line_number: usize, file_path: &Path) {
+		// TODO: Calling `when()` here gives `Segmentation fault (core dumped)`
 		self.lines.push(LineData::new_everything(
 			UNIX_EPOCH + Duration::from_secs(when.final_signature().when().seconds() as u64),
 			line, line_number, file_path
