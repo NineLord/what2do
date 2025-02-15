@@ -16,8 +16,9 @@ use crate::script_logic::find_what_to_do::FindWhatToDo;
 
 fn main() -> Result<()> {
 	let find_what_to_do = FindWhatToDo::new(env::current_dir()?)?;
-	let lines = find_what_to_do.start()?;
-	println!("{lines:?}");
+	let lines = find_what_to_do.start()?
+		.sort()
+		.print();
 	Ok(())
 }
 // todo

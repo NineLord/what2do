@@ -3,12 +3,17 @@ use std::{
 	ffi::OsString,
 	path::Path,
 };
+use getset::{CopyGetters, Getters, MutGetters, Setters};
 
-#[derive(Debug)]
+#[derive(Debug, CopyGetters, Getters)]
 pub struct LineData {
+	#[getset(get_copy = "pub")]
 	when: SystemTime,
+	#[getset(get = "pub")]
 	line: String,
+	#[getset(get_copy = "pub")]
 	line_number: usize,
+	#[getset(get = "pub")]
 	file_path: OsString,
 }
 
