@@ -4,6 +4,7 @@ use std::{
 	path::Path,
 };
 
+#[derive(Debug)]
 pub struct LineData {
 	when: SystemTime,
 	line: String,

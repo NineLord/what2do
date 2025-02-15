@@ -8,13 +8,13 @@ use regex::{Regex, RegexBuilder};
 use anyhow::Result;
 use super::result::lines::Lines;
 
-pub struct FindWhat2Do {
+pub struct FindWhatToDo {
 	starting_path: PathBuf,
 	repository: Repository,
 	todo_regex: Regex,
 }
 
-impl FindWhat2Do {
+impl FindWhatToDo {
 	pub fn new(path: PathBuf) -> Result<Self> {
 		Ok(Self {
 			starting_path: path.clone(),
@@ -27,7 +27,7 @@ impl FindWhat2Do {
 	}
 }
 
-impl FindWhat2Do {
+impl FindWhatToDo {
 	pub fn start(&self) -> Result<Lines> {
 		let mut lines = Lines::new();
 		self.iter_recursively_all_files(&self.starting_path, PathBuf::new(), &mut lines)?;
@@ -40,12 +40,7 @@ impl FindWhat2Do {
 			let file_type: fs::FileType = entry.file_type()?;
 			if file_type.is_file() {
 				relative_path.push(Path::new(&entry.file_name()));
-				match self.repository.blame_file(&relative_path, None/*Some(BlameOptions::new()
-					.track_copies_any_commit_copies(true)
-					.track_copies_same_commit_copies(true)
-					.track_copies_same_commit_moves(true)
-					.track_copies_same_file(true) // TODO: maybe can do it without options? or use repo.status_should_ignore?
-				)*/) {
+				match self.repository.blame_file(&relative_path, None) { // TODO: repo.status_should_ignore?
 					Ok(blame) => self.handle_file(&entry.path(), &relative_path, blame, lines)?,
 					Err(error) => match error.code() {
 						ErrorCode::NotFound => (), // New file that wasn't committed
@@ -72,8 +67,7 @@ impl FindWhat2Do {
 		Ok(())
 	}
 
-	fn handle_file(&self, absolute_path: &PathBuf, relative_path: &PathBuf, blame: Blame<'_>, lines: &mut Lines) -> Result<()> {
-		dbg!(&relative_path);	
+	fn handle_file(&self, absolute_path: &PathBuf, relative_path: &Path, blame: Blame<'_>, lines: &mut Lines) -> Result<()> {
 		let file_buffer = fs::read(absolute_path)?;
 		let file_string = from_utf8(&file_buffer)?;
 		let todo_lines: Vec<(usize, &str)> = file_string
@@ -97,8 +91,7 @@ impl FindWhat2Do {
 			let blame_hunk = blame
 				.get_line(line_number)
 				.expect("line_number must be valid at this point");
-			dbg!(line_number, blame_hunk.final_start_line(), blame_hunk.orig_start_line(), blame_hunk.lines_in_hunk(), blame_hunk.is_boundary());
-			if blame_hunk.orig_start_line() == 0 {
+			if blame_hunk.orig_start_line() < blame_hunk.final_start_line() { // This condition is really problematic to know if the line going to have blame data or not because it's uncommitted line
 				lines.push_uncommitted(line, line_number, relative_path);
 			} else {
 				lines.push_committed(&blame_hunk, line, line_number, relative_path);
