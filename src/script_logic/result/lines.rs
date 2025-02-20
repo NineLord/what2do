@@ -28,21 +28,6 @@ impl Lines {
     }
 
 	#[require(Initial)]
-	pub fn push_committed(mut self, when: &BlameHunk<'_>, line: &str, line_number: usize, file_path: &Path) -> Lines {
-		self.lines.push(LineData::new_everything(
-			UNIX_EPOCH + Duration::from_secs(when.final_signature().when().seconds() as u64),
-			line, line_number, file_path
-		));
-		self
-	}
-
-	#[require(Initial)]
-	pub fn push_uncommitted(mut self, line: &str, line_number: usize, file_path: &Path) -> Lines {
-		self.lines.push(LineData::new_everything(self.now.expect("Initial state has 'now' field"), line, line_number, file_path));
-		self
-	}
-
-	#[require(Initial)]
 	#[switch_to(Sorted)]
 	pub fn sort(mut self) -> Lines {
 		self.lines.sort_by_key(|line_data| line_data.when());
@@ -66,5 +51,18 @@ impl Lines {
 		}
 		drop(stdout);
 		self
+	}
+}
+
+impl Lines<Initial> {
+	pub fn push_committed(&mut self, when: &BlameHunk<'_>, line: &str, line_number: usize, file_path: &Path) {
+		self.lines.push(LineData::new_everything(
+			UNIX_EPOCH + Duration::from_secs(when.final_signature().when().seconds() as u64),
+			line, line_number, file_path
+		));
+	}
+
+	pub fn push_uncommitted(&mut self, line: &str, line_number: usize, file_path: &Path) {
+		self.lines.push(LineData::new_everything(self.now.expect("Initial state has 'now' field"), line, line_number, file_path));
 	}
 }

@@ -67,6 +67,7 @@ impl FindWhatToDo {
 	}
 
 	fn handle_file(&self, absolute_path: &PathBuf, relative_path: &Path, blame: Blame<'_>, lines: Lines) -> Result<Lines> {
+		dbg!(&relative_path);
 		let mut lines = lines;
 		let file_buffer = fs::read(absolute_path)?;
 		let file_string = from_utf8(&file_buffer)?;
@@ -93,9 +94,9 @@ impl FindWhatToDo {
 				.expect("line_number must be valid at this point");
 			// dbg!(line_number, blame_hunk.orig_start_line(), blame_hunk.final_start_line()); // TODO: delete this
 			if blame_hunk.orig_start_line() != blame_hunk.final_start_line() { // This condition is really problematic to know if the line going to have blame data or not because it's uncommitted line
-				lines = lines.push_uncommitted(line, line_number, relative_path);
+				lines.push_uncommitted(line, line_number, relative_path);
 			} else {
-				lines = lines.push_committed(&blame_hunk, line, line_number, relative_path);
+				lines.push_committed(&blame_hunk, line, line_number, relative_path);
 			}
 		}
 		Ok(lines)
